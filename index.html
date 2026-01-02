@@ -5,12 +5,25 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>funnyfunny.cloud 밸런스게임</title>
   <meta name="description" content="랜덤 밸런스게임 10문제. 링크로 공유하고 TXT로 내보내기." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2064%2064%27%3E%3Crect%20width%3D%2764%27%20height%3D%2764%27%20rx%3D%2714%27%20fill%3D%27%23111%27/%3E%3Ccircle%20cx%3D%2722%27%20cy%3D%2732%27%20r%3D%2710%27%20fill%3D%27%237fd1ff%27/%3E%3Ccircle%20cx%3D%2742%27%20cy%3D%2732%27%20r%3D%2710%27%20fill%3D%27%23ff9f7f%27/%3E%3Crect%20x%3D%2724%27%20y%3D%2730%27%20width%3D%2716%27%20height%3D%274%27%20rx%3D%272%27%20fill%3D%27%23111%27/%3E%3C/svg%3E" type="image/svg+xml" />
+  <meta property="og:image" content="https://dummyimage.com/1200x630/0b1220/ffffff&text=Balnce" />
   <style>
     :root { color-scheme: light dark; }
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; margin: 0; }
-    header { padding: 20px 16px 10px; border-bottom: 1px solid rgba(127,127,127,.25); }
+    header { padding: 20px 16px 10px; border-bottom: 1px solid rgba(127,127,127,.25); position: relative; }
     h1 { margin: 0 0 6px; font-size: 20px; }
     .sub { opacity: .75; font-size: 13px; line-height: 1.35; }
+    .headerActions { position: absolute; right: 16px; top: 18px; display: flex; gap: 8px; align-items: center; }
+    .headerLink {
+      font-size: 12px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(127,127,127,.35);
+      background: rgba(127,127,127,.08);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .headerLink:hover { filter: brightness(1.05); }
     main { max-width: 980px; margin: 0 auto; padding: 14px 16px 40px; }
     .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0 14px; }
     button, select { font-size: 14px; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(127,127,127,.35); background: rgba(127,127,127,.08); cursor: pointer; }
@@ -52,10 +65,17 @@
     .small { font-size: 12px; opacity: .75; }
     .warn { color: #d66; }
     a { color: inherit; }
+    @media (max-width: 560px) {
+      .headerActions { position: static; margin-top: 8px; justify-content: flex-start; }
+      header { padding-bottom: 14px; }
+    }
   </style>
 </head>
 <body>
 <header>
+  <div class="headerActions">
+    <a class="headerLink" href="https://funnyfunny.cloud/" target="_blank" rel="noopener noreferrer">다른 서비스 보기</a>
+  </div>
   <h1>funnyfunny 밸런스게임</h1>
   <div class="sub">
     ✅ <b>랜덤 10문제</b> / ✅ <b>카테고리 랜덤</b> / ✅ <b>오늘의 10문제(KST)</b><br>
@@ -95,6 +115,9 @@
   <div class="summary">
     <h2 style="font-size:16px; margin: 18px 0 8px;">내 결과(공유/복사용)</h2>
     <textarea id="txtOut" readonly></textarea>
+    <div class="controls" style="margin-top: 8px;">
+      <button id="btnShareResult">📣 내 결과 공유하기</button>
+    </div>
     <div class="small">
       - TXT 내보내기는 파일 다운로드로 저장됩니다.<br>
       - “링크 공유”는 <b>#</b>에 문제 조합이 저장되어 같은 링크로 같은 10문제를 다시 열 수 있어요.
@@ -696,6 +719,28 @@ function exportTxt() {
   setMsg("TXT 파일로 저장했어요.");
 }
 
+// --- 내 결과 공유
+async function shareResultText() {
+  if (!current) { setMsg("먼저 10문제를 생성하세요.", true); return; }
+  const answers = loadAnswers(current.id);
+  const text = buildShareText(answers);
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: "funnyfunny 밸런스게임 결과", text, url: location.href });
+      setMsg("공유 완료!");
+      return;
+    }
+  } catch {
+    // fall through to clipboard
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    setMsg("내 결과를 복사했어요!");
+  } catch {
+    setMsg("공유가 지원되지 않아요. TXT로 내보내기를 이용하세요.", true);
+  }
+}
+
 // --- 초기화
 function resetAll() {
   current = null;
@@ -742,6 +787,7 @@ $("#btnCatRandom").addEventListener("click", genCategorySelectedOrRandom);
 $("#btnToday").addEventListener("click", genToday10);
 $("#btnCopyLink").addEventListener("click", copyCurrentLink);
 $("#btnExportTxt").addEventListener("click", exportTxt);
+$("#btnShareResult").addEventListener("click", shareResultText);
 $("#btnReset").addEventListener("click", resetAll);
 
 // 해시 변경 시에도 로드(공유 링크 열기 등)
