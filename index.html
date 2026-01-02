@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>funnyfunny.cloud 밸런스게임</title>
+  <meta name="description" content="랜덤 밸런스게임 10문제. 링크로 공유하고 TXT로 내보내기." />
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; margin: 0; }
+    header { padding: 20px 16px 10px; border-bottom: 1px solid rgba(127,127,127,.25); }
+    h1 { margin: 0 0 6px; font-size: 20px; }
+    .sub { opacity: .75; font-size: 13px; line-height: 1.35; }
+    main { max-width: 980px; margin: 0 auto; padding: 14px 16px 40px; }
+    .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0 14px; }
+    button, select { font-size: 14px; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(127,127,127,.35); background: rgba(127,127,127,.08); cursor: pointer; }
+    button:hover { filter: brightness(1.05); }
+    button:active { transform: translateY(1px); }
+    .pill { padding: 6px 10px; border: 1px solid rgba(127,127,127,.35); border-radius: 999px; font-size: 12px; opacity: .9; }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 6px 0 12px; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    @media (min-width: 860px) { .grid { grid-template-columns: 1fr 1fr; } }
+
+    .card { border: 1px solid rgba(127,127,127,.25); border-radius: 14px; padding: 12px; background: rgba(127,127,127,.06); }
+    .qtop { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+    .qnum { font-weight: 700; }
+    .qcat { opacity: .75; font-size: 12px; }
+    .qtitle { margin: 0 0 10px; font-size: 14px; line-height: 1.45; opacity: .9; }
+
+    .choices { display: grid; grid-template-columns: 1fr; gap: 8px; }
+    @media (min-width: 520px) { .choices { grid-template-columns: 1fr 1fr; } }
+
+    .choiceBtn {
+      text-align: left;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(127,127,127,.28);
+      background: rgba(127,127,127,.07);
+      min-height: 56px;
+      white-space: normal;
+      line-height: 1.35;
+    }
+    .choiceBtn strong { display: block; font-size: 13px; margin-bottom: 4px; opacity: .85; }
+    .choiceBtn.selected { outline: 2px solid rgba(100,200,255,.65); border-color: rgba(100,200,255,.65); background: rgba(100,200,255,.12); }
+    .choiceBtn[disabled] { opacity: .6; cursor: not-allowed; }
+    .status { margin-top: 10px; font-size: 13px; opacity: .8; display: flex; gap: 10px; flex-wrap: wrap; }
+    .bar { height: 10px; border-radius: 999px; background: rgba(127,127,127,.2); overflow: hidden; width: min(520px, 100%); }
+    .bar > div { height: 100%; width: 0%; background: rgba(100,200,255,.7); transition: width .2s ease; }
+    .summary { margin-top: 16px; }
+    textarea { width: 100%; min-height: 140px; padding: 12px; border-radius: 12px; border: 1px solid rgba(127,127,127,.35); background: rgba(127,127,127,.06); font-size: 13px; line-height: 1.35; }
+    .small { font-size: 12px; opacity: .75; }
+    .warn { color: #d66; }
+    a { color: inherit; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>funnyfunny 밸런스게임</h1>
+  <div class="sub">
+    ✅ <b>랜덤 10문제</b> / ✅ <b>카테고리 랜덤</b> / ✅ <b>오늘의 10문제(KST)</b><br>
+    ✅ <b>링크 공유</b>(URL 해시로 저장) / ✅ <b>내 선택 TXT</b> 내보내기 (정적 HTML만)
+  </div>
+</header>
+
+<main>
+  <div class="controls">
+    <button id="btnRandom">🎲 랜덤 10문제</button>
+    <select id="selCategory" title="카테고리 선택">
+      <option value="">카테고리 선택</option>
+    </select>
+    <button id="btnCatRandom">🧩 카테고리 랜덤</button>
+    <button id="btnToday">📅 오늘의 10문제</button>
+    <button id="btnCopyLink">🔗 현재 링크 복사</button>
+    <button id="btnExportTxt">🧾 TXT로 내보내기</button>
+    <button id="btnReset">♻️ 초기화</button>
+  </div>
+
+  <div class="meta">
+    <span class="pill" id="pillMode">모드: -</span>
+    <span class="pill" id="pillCat">카테고리: -</span>
+    <span class="pill" id="pillProgress">진행: 0/10</span>
+  </div>
+
+  <div class="row">
+    <div class="bar" aria-label="진행도">
+      <div id="progressFill"></div>
+    </div>
+    <div class="small" id="hintText">버튼을 눌러 10문제를 생성하세요.</div>
+  </div>
+
+  <div style="height:12px"></div>
+  <div id="game" class="grid"></div>
+
+  <div class="summary">
+    <h2 style="font-size:16px; margin: 18px 0 8px;">내 결과(공유/복사용)</h2>
+    <textarea id="txtOut" readonly></textarea>
+    <div class="small">
+      - TXT 내보내기는 파일 다운로드로 저장됩니다.<br>
+      - “링크 공유”는 <b>#</b>에 문제 조합이 저장되어 같은 링크로 같은 10문제를 다시 열 수 있어요.
+    </div>
+    <div id="msg" class="small" style="margin-top:8px;"></div>
+  </div>
+
+  <hr style="margin: 18px 0; border: none; border-top: 1px solid rgba(127,127,127,.25)">
+
+  <div class="small">
+    <b>나중에 문항 추가</b>: 아래 코드의 <code>QUESTIONS</code> 배열에 문자열을 더 붙이면 됩니다.<br>
+    문항 형식은 <code>"A vs B"</code>로 유지하면 자동 분해됩니다.
+  </div>
+</main>
+
+<script>
+/**
+ * =========================================================
+ *  200개 밸런스 문항 (사용자 요청: 내가 만든 200개로 시작)
+ *  카테고리는 "구간"으로 간단히 태깅:
+ *   1-20 음식
+ *   21-40 생활
+ *   41-60 직장/학교
+ *   61-80 친구/연애
+ *   81-100 초능력/판타지
+ *   101-120 여행
+ *   121-140 취미/콘텐츠
+ *   141-160 테크/폰/SNS
+ *   161-180 라이프/운동/외모
+ *   181-200 기타/성격/인생
+ * =========================================================
+ */
+const QUESTIONS = [
+  "평생 물만 마시기 vs 평생 탄산만 마시기",
+  "평생 라면 금지 vs 평생 치킨 금지",
+  "평생 커피 금지 vs 평생 초콜릿 금지",
+  "평생 매운맛만 가능 vs 평생 순한맛만 가능",
+  "평생 밥만 먹기 vs 평생 빵만 먹기",
+  "평생 떡볶이 금지 vs 평생 아이스크림 금지",
+  "삼겹살 무한 vs 초밥 무한",
+  "피자 토핑 전부 빼기 vs 토핑 5개 이상만 가능",
+  "평생 야식 가능(살 안 찜) vs 평생 야식 금지(살 안 찜)",
+  "김치 없이 살기 vs 국물 없이 살기",
+  "짠맛 2배로 느끼기 vs 단맛 2배로 느끼기",
+  "평생 콜라만 가능 vs 평생 사이다만 가능",
+  "아이스크림 겨울에만 가능 vs 여름에만 가능",
+  "치킨은 항상 퍽퍽살 vs 항상 닭다리만(다른 부위 없음)",
+  "라면은 국물만 vs 면만",
+  "햄버거는 패티 2장 vs 치즈 2장(패티 1장)",
+  "떡볶이는 떡만 vs 어묵만",
+  "평생 과일 금지 vs 평생 채소 금지",
+  "매일 같은 메뉴 vs 매일 랜덤 메뉴(선택 불가)",
+  "외식만 가능 vs 집밥만 가능",
+
+  "알람 없이 기상 vs 항상 알람 10개 필요",
+  "하루 4시간만 자기 vs 하루 12시간씩 자기",
+  "샤워 5분 제한 vs 샤워 물 온도 랜덤",
+  "평생 휴대폰 배터리 20%에서 멈춤 vs 80%에서 멈춤",
+  "평생 이어폰 한쪽만 가능 vs 항상 스피커로만 듣기",
+  "이불 항상 차가움 vs 항상 따뜻함",
+  "비 오는 날만 외출 가능 vs 맑은 날만 외출 가능",
+  "평생 신발 끈 자주 풀림 vs 지퍼 자주 걸림",
+  "하루 10분 순간이동 가능 vs 하루 1시간 투명인간 가능",
+  "항상 5분 늦게 도착 vs 항상 30분 일찍 도착",
+  "집안 온도 항상 18도 vs 항상 28도",
+  "와이파이만 가능 vs 데이터만 가능",
+  "평생 폰 케이스 없이 vs 평생 두꺼운 범퍼만",
+  "비밀번호 매일 바뀜 vs 비밀번호 절대 못 바꿈",
+  "평생 손목시계만 사용 vs 평생 벽시계만 의존",
+  "하루에 딱 한 번만 웃기 vs 하루에 딱 한 번만 화내기",
+  "평생 모기 한 마리 따라다님 vs 파리 한 마리 따라다님",
+  "평생 택시 금지 vs 평생 지하철 금지",
+  "엘리베이터만 가능 vs 계단만 가능",
+  "양치 30초만 가능 vs 세수 30초만 가능",
+
+  "직장/학교에서 매일 발표 vs 매일 단체사진",
+  "상사/교수님이 농담 강요 vs 칭찬 강요",
+  "매일 회의 2시간 vs 매일 보고서 2시간",
+  "출근/등교 30분 추가 vs 퇴근/하교 30분 추가",
+  "팀플만 있는 학기 vs 시험만 있는 학기",
+  "매일 야근 1시간 vs 주말 출근 월 2회",
+  "회사 점심 메뉴 항상 랜덤 vs 항상 고정",
+  "메일/메신저 답장 즉시 강제 vs 하루 2번만 확인 가능",
+  "회식 월 4회 vs 워크숍 분기 1회",
+  "발표는 완벽하지만 질문에 약함 vs 발표는 약하지만 질문에 강함",
+  "월급 10%↑ 대신 휴가 0일 vs 월급 10%↓ 대신 휴가 2배",
+  "출근길 지옥 vs 퇴근길 지옥",
+  "혼자 일하기 vs 계속 협업하기",
+  "칭찬은 공개적으로만 vs 피드백은 공개적으로만",
+  "팀원이 너무 느림 vs 팀원이 너무 빠름(나를 끌고 감)",
+  "회의 때만 말 잘함 vs 작업 때만 잘함",
+  "상사가 디테일 집착 vs 상사가 방향만 던짐",
+  "매일 아침 스몰토크 10분 vs 매일 퇴근 전 회고 10분",
+  "오피스 BGM 강제 vs 완전 무음 강제",
+  "자리 고정 오픈오피스 vs 자리 매일 랜덤",
+
+  "친구랑 항상 취향 겹침 vs 항상 반대 취향",
+  "답장 빠른 친구만 vs 약속 잘 잡는 친구만",
+  "읽씹은 없음(대신 단답) vs 단답 없음(대신 읽씹)",
+  "내 얘기만 하는 친구 vs 남 얘기만 하는 친구",
+  "생일파티 크게 vs 생일 완전 조용히",
+  "선물 센스 없음 vs 축하 멘트 센스 없음",
+  "“사진 많이 찍자” 친구 vs “사진 0장” 친구",
+  "만날 때마다 계획 빡세게 vs 만날 때마다 즉흥",
+  "단톡방 활발 vs 단톡방 조용(필요할 때만)",
+  "친구가 약속 10분 늦음 vs 내가 10분 늦음",
+  "친해지면 드립 심함 vs 친해지면 무뚝뚝",
+  "매일 연락하는 관계 vs 일주일에 한 번 깊게 대화",
+  "취미 같이 하는 친구 vs 고민 들어주는 친구",
+  "말로 애정표현 vs 행동으로 애정표현",
+  "데이트는 항상 야외 vs 항상 실내",
+  "고백은 먼저 하기 vs 고백은 받기",
+  "연애 중 SNS 공개 vs 비공개",
+  "기념일 챙기기 빡세게 vs 기념일 아예 안 챙기기",
+  "싸우면 바로 풀기 vs 하루 지나서 풀기",
+  "여행은 둘이만 vs 친구 커플까지 넷이",
+
+  "하루 1번 미래 10초 보기 vs 과거 10초 보기",
+  "마음 읽기(확률 50%) vs 거짓말 감지(확률 90%)",
+  "순간이동(1일 3회) vs 시간 멈춤(1일 10초)",
+  "투명인간 vs 동물과 대화",
+  "초능력 있는데 남이 모름 vs 초능력 없는데 모두 믿음",
+  "원하는 꿈 꾸기 vs 꿈 없이 깊게 자기",
+  "평생 운이 좋음(실력 0) vs 실력 좋음(운 0)",
+  "매일 1만원 랜덤 획득 vs 주 1회 10만원 확정 획득",
+  "말하면 현실이 됨(하루 1문장) vs 생각하면 현실이 됨(하루 1생각)",
+  "어디서든 길 안 잃음 vs 누구와도 금방 친해짐",
+  "하루 30분 공중부양 vs 하루 30분 초고속 달리기",
+  "손대면 고장 고치기 vs 손대면 깨끗해지기",
+  "내가 한 선택 항상 정답 vs 내가 피한 선택이 정답",
+  "원하는 사람과 10분 대화 vs 원하는 장소에 10분 체류",
+  "평생 다이어트 필요 없음 vs 평생 감기 안 걸림",
+  "나만 자막 보임 vs 나만 배경음악 들림",
+  "기억력 2배 vs 집중력 2배",
+  "감정 컨트롤 가능 vs 통증 컨트롤 가능",
+  "말발 S급 vs 글발 S급",
+  "아침형 천재 vs 밤형 천재",
+
+  "평생 여름만 vs 평생 겨울만",
+  "여행은 바다만 vs 산만",
+  "국내여행만 vs 해외여행만(1년에 1번)",
+  "혼자 여행만 vs 무조건 단체여행",
+  "비행기만 가능 vs 기차만 가능",
+  "숙소는 호텔만 vs 게스트하우스만",
+  "계획 100% 세우기 vs 계획 0% 즉흥",
+  "사진 1,000장 찍기 vs 사진 0장",
+  "관광지 필수 vs 맛집 필수",
+  "짧게 자주 여행 vs 길게 가끔 여행",
+  "캠핑만 가능 vs 글램핑만 가능",
+  "여행 중 쇼핑 금지 vs 여행 중 카페 금지",
+  "여행 중 길 잃기 vs 여행 중 비 맞기",
+  "여행 중 배탈 vs 여행 중 휴대폰 고장",
+  "여행은 힐링 vs 여행은 액티비티",
+  "새벽 출발 vs 밤 도착",
+  "유명한 곳만 vs 아무도 모르는 곳만",
+  "여행 내내 혼자 식사 vs 여행 내내 단체 식사",
+  "짐 가볍게(불편) vs 짐 무겁게(편함)",
+  "여행 경비 2배(동행 불가) vs 여행 경비 반(동행 가능)",
+
+  "게임은 스토리형 vs 경쟁형",
+  "롤/오버워치 같은 팀게임만 vs 싱글게임만",
+  "하루 1시간만 게임 vs 주말에 몰아 게임",
+  "게임할 때 음성채팅 필수 vs 채팅 금지",
+  "승부욕 강한 파티 vs 웃긴 파티",
+  "랭크만 vs 일반만",
+  "키보드 소리 큰 기계식 vs 조용한 멤브레인",
+  "콘솔만 vs PC만",
+  "모바일게임만 vs 보드게임만",
+  "게임할 때 간식 금지 vs 음료 금지",
+  "영화는 극장만 vs 집에서만",
+  "드라마 정주행만 vs 매주 본방만",
+  "스포 당하기 vs 결말 미루기",
+  "책 종이책만 vs 전자책만",
+  "음악은 라이브만 vs 음원만",
+  "노래는 후렴만 반복 vs 1절만 반복",
+  "춤추기 잘함 vs 노래 잘함",
+  "그림 잘 그림 vs 사진 잘 찍음",
+  "취미 10개 얕게 vs 취미 1개 깊게",
+  "혼자 취미 vs 같이 취미",
+
+  "내 폰 자동수정 항상 이상함 vs 자동완성 항상 스포함",
+  "인터넷 속도 2배 vs 배터리 2배",
+  "SNS 완전 끊기 vs 유튜브 완전 끊기",
+  "광고 없는 대신 월 1만원 vs 무료 대신 광고 2배",
+  "다크모드만 가능 vs 라이트모드만 가능",
+  "키보드 이모지 금지 vs 짤 저장 금지",
+  "검색은 항상 1페이지에 정답 vs 검색은 항상 랜덤(대신 신기함)",
+  "지도앱 없기 vs 번역앱 없기",
+  "폰 분실 한 달 1번 vs 인터넷 끊김 한 달 1번",
+  "사진 자동백업 없음 vs 연락처 자동백업 없음",
+  "AI가 내 일정 다 관리 vs AI가 내 대화 다 요약(프라이버시 걱정)",
+  "영상통화만 가능 vs 음성통화만 가능",
+  "문자만 가능 vs 전화만 가능",
+  "모든 알림 켜짐 강제 vs 모든 알림 꺼짐 강제",
+  "비밀번호 없이 얼굴인식만 vs OTP만",
+  "폰 카메라 화질 최강 vs 스피커 음질 최강",
+  "폰 켜는데 30초 vs 앱 열리는데 10초",
+  "폰 화면 작게만 vs 크게만",
+  "인터넷 댓글 절대 못 달기 vs 좋아요 절대 못 누르기",
+  "내 과거 검색기록 공개 vs 내 미래 검색기록 공개",
+
+  "평생 모자만 쓰기 vs 평생 선글라스만 쓰기",
+  "매일 같은 옷 vs 매일 랜덤 옷(내가 고른 적 없음)",
+  "패딩만 입기 vs 코트만 입기",
+  "운동은 유산소만 vs 근력만",
+  "하루 1만 보 걷기 강제 vs 하루 30분 스트레칭 강제",
+  "살 안 찜(대신 체력 약함) vs 체력 최강(대신 살 잘 찜)",
+  "키 5cm 더 vs 시력 1.0 평생 유지",
+  "피부 완벽 vs 머리숱 완벽",
+  "목소리 좋아짐 vs 손글씨 좋아짐",
+  "기억력은 나쁨(스트레스 없음) vs 기억력은 좋음(과거 흑역사 선명)",
+  "웃음소리 크게 들림 vs 한숨소리 크게 들림",
+  "말하면 항상 라임이 맞음 vs 말하면 항상 반말로 들림",
+  "하루 10번 “헉” 자동 반응 vs 하루 10번 “ㅋㅋ” 자동 반응",
+  "웃긴 드립 자동 생성(가끔 썰렁) vs 분위기 파악 자동(가끔 과몰입)",
+  "항상 좋은 향기 vs 항상 좋은 촉감(옷/침구)",
+  "날씨에 민감(기분 좌우) vs 음식에 민감(기분 좌우)",
+  "길거리에서 아는 사람 자주 만남 vs 택배 매일 옴(필요 없는 것도)",
+  "지갑 항상 두꺼움(영수증) vs 가방 항상 무거움(잡동사니)",
+  "내 방 항상 정리됨(대신 물건 위치 랜덤) vs 내 방 항상 어질러짐(대신 위치 고정)",
+  "물건 자주 잃어버림 vs 물건 자주 깨뜨림",
+
+  "평생 “예스”만 말하기 vs 평생 “노”만 말하기",
+  "나만 모두의 말이 0.8배속 vs 나만 모두의 말이 1.5배속",
+  "웃음 참기 챌린지 매일 1번 vs 눈물 참기 챌린지 매일 1번",
+  "모든 농담에 진지하게 답함 vs 모든 질문에 농담으로 답함",
+  "소개팅 10번 연속 vs 면접 10번 연속",
+  "하루 1번 랜덤 칭찬 받기 vs 하루 1번 랜덤 지적 받기",
+  "항상 첫인상 S급 vs 항상 오래 보면 S급",
+  "어색함 0(대신 눈치 0) vs 눈치 100(대신 어색함 100)",
+  "말실수 자주 vs 행동실수 자주",
+  "나만 시간 감각 정확 vs 나만 방향 감각 정확",
+  "1년에 딱 한 번 대박 vs 매달 소확행 꾸준",
+  "오늘의 운세 100% 맞음 vs 내일의 날씨 100% 맞음",
+  "내 인생 OST가 들림 vs 내 인생 자막이 보임",
+  "감정이 색으로 보임 vs 거짓말이 소리로 들림",
+  "나만 하루 25시간 vs 나만 하루 23시간",
+  "내 말이 항상 회자됨 vs 내 행동이 항상 밈이 됨",
+  "평생 “대박”만 감탄사 vs 평생 “헐”만 감탄사",
+  "하루 1번 랜덤 소원(작음) vs 1년에 1번 큰 소원",
+  "내가 찍은 사진은 항상 잘 나옴 vs 남이 찍어준 사진은 항상 잘 나옴",
+  "지금 당장 10억(대신 기억 1개 삭제) vs 매달 300만 평생(기억 그대로)"
+];
+
+// ---- 카테고리(구간 태깅)
+const CATEGORIES = [
+  { key: "food",   name: "🍜 음식",       start: 1,   end: 20  },
+  { key: "life",   name: "🏠 생활",       start: 21,  end: 40  },
+  { key: "work",   name: "💼 직장/학교",  start: 41,  end: 60  },
+  { key: "love",   name: "💬 친구/연애",  start: 61,  end: 80  },
+  { key: "fantasy",name: "✨ 초능력",     start: 81,  end: 100 },
+  { key: "travel", name: "🧳 여행",       start: 101, end: 120 },
+  { key: "hobby",  name: "🎮 취미/콘텐츠", start: 121, end: 140 },
+  { key: "tech",   name: "📱 테크/SNS",   start: 141, end: 160 },
+  { key: "style",  name: "💪 라이프/운동", start: 161, end: 180 },
+  { key: "misc",   name: "🌀 기타",       start: 181, end: 200 },
+];
+
+const $ = (sel) => document.querySelector(sel);
+const gameEl = $("#game");
+const pillMode = $("#pillMode");
+const pillCat = $("#pillCat");
+const pillProgress = $("#pillProgress");
+const progressFill = $("#progressFill");
+const hintText = $("#hintText");
+const txtOut = $("#txtOut");
+const msg = $("#msg");
+const selCategory = $("#selCategory");
+
+function setMsg(text, isWarn=false) {
+  msg.textContent = text;
+  msg.className = "small" + (isWarn ? " warn" : "");
+}
+
+// --- RNG: seedable (오늘의 10문제용)
+function xorshift32(seed) {
+  let x = seed >>> 0;
+  return function() {
+    x ^= x << 13; x >>>= 0;
+    x ^= x >> 17; x >>>= 0;
+    x ^= x << 5;  x >>>= 0;
+    return (x >>> 0) / 4294967296;
+  };
+}
+function randInt(rng, min, max) {
+  return Math.floor(rng() * (max - min + 1)) + min;
+}
+function pickUniqueIndices(poolIndices, count, rng=Math.random) {
+  const arr = poolIndices.slice();
+  // Fisher-Yates shuffle (partial)
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor((typeof rng === "function" ? rng() : Math.random()) * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr.slice(0, Math.min(count, arr.length));
+}
+
+function splitVs(q) {
+  const parts = q.split(" vs ");
+  if (parts.length < 2) return { a: q.trim(), b: "" };
+  return { a: parts[0].trim(), b: parts.slice(1).join(" vs ").trim() };
+}
+
+function categoryOfIndex1(i1) { // 1-based index
+  return CATEGORIES.find(c => i1 >= c.start && i1 <= c.end) || null;
+}
+
+// --- 상태
+let current = null;
+// current = { indices1: number[10] (1-based), mode: string, categoryKey?: string, id: string }
+const LS_KEY_PREFIX = "ff_balance_answers_";
+
+function makeGameId(indices1, mode, categoryKey="") {
+  // 짧게 고유 + 재현 가능
+  const base = indices1.join("-");
+  let h = 2166136261;
+  for (let i = 0; i < base.length; i++) {
+    h ^= base.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  const time = Date.now().toString(36).slice(-4);
+  return (h >>> 0).toString(36) + "_" + mode + "_" + (categoryKey || "all") + "_" + time;
+}
+
+function encodeIndices(indices1) {
+  // 1-based indices -> base36, '.' join
+  return indices1.map(n => n.toString(36)).join(".");
+}
+function decodeIndices(s) {
+  if (!s) return null;
+  const parts = s.split(".").filter(Boolean);
+  const nums = parts.map(p => parseInt(p, 36)).filter(n => Number.isFinite(n) && n >= 1 && n <= QUESTIONS.length);
+  // 중복 제거 유지(순서 유지)
+  const seen = new Set();
+  const uniq = [];
+  for (const n of nums) {
+    if (!seen.has(n)) { seen.add(n); uniq.push(n); }
+  }
+  return uniq.length ? uniq : null;
+}
+
+function setHashFromCurrent() {
+  if (!current) return;
+  const params = new URLSearchParams();
+  params.set("g", encodeIndices(current.indices1));
+  params.set("m", current.mode);
+  if (current.categoryKey) params.set("c", current.categoryKey);
+  location.hash = params.toString();
+}
+
+function readHashGame() {
+  const raw = (location.hash || "").replace(/^#/, "");
+  if (!raw) return null;
+  const params = new URLSearchParams(raw);
+  const g = params.get("g");
+  const indices1 = decodeIndices(g);
+  if (!indices1 || indices1.length < 2) return null;
+  const mode = params.get("m") || "link";
+  const categoryKey = params.get("c") || "";
+  // 길이 10이 아니면 10으로 맞추기(부족하면 랜덤 보충)
+  let final = indices1.slice(0, 10);
+  if (final.length < 10) {
+    const pool = [...Array(QUESTIONS.length)].map((_, i) => i + 1).filter(n => !final.includes(n));
+    const add = pickUniqueIndices(pool, 10 - final.length);
+    final = final.concat(add);
+  }
+  return { indices1: final, mode, categoryKey };
+}
+
+function getKSTDateKey() {
+  // Asia/Seoul 기준 YYYY-MM-DD
+  const fmt = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" });
+  return fmt.format(new Date()); // ex) 2026-01-02
+}
+function seedFromString(str) {
+  // 간단 해시 seed
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = (h * 31 + str.charCodeAt(i)) >>> 0;
+  }
+  return h >>> 0;
+}
+
+function loadAnswers(gameId) {
+  try {
+    const raw = localStorage.getItem(LS_KEY_PREFIX + gameId);
+    if (!raw) return {};
+    const obj = JSON.parse(raw);
+    return (obj && typeof obj === "object") ? obj : {};
+  } catch { return {}; }
+}
+function saveAnswers(gameId, answers) {
+  try { localStorage.setItem(LS_KEY_PREFIX + gameId, JSON.stringify(answers)); } catch {}
+}
+
+function computeProgress(answers) {
+  const answered = Object.keys(answers).length;
+  return { answered, total: 10 };
+}
+
+function updateMeta(answers) {
+  const p = computeProgress(answers);
+  pillMode.textContent = `모드: ${current ? current.mode : "-"}`;
+  const catName = current?.categoryKey ? (CATEGORIES.find(c => c.key === current.categoryKey)?.name || current.categoryKey) : "전체";
+  pillCat.textContent = `카테고리: ${catName}`;
+  pillProgress.textContent = `진행: ${p.answered}/${p.total}`;
+  progressFill.style.width = `${(p.answered / p.total) * 100}%`;
+
+  if (!current) {
+    hintText.textContent = "버튼을 눌러 10문제를 생성하세요.";
+  } else if (p.answered < p.total) {
+    hintText.textContent = "각 문항에서 A/B 중 하나를 눌러주세요. (선택은 내 브라우저에만 저장됨)";
+  } else {
+    hintText.textContent = "완료! 아래 ‘내 결과’로 공유하거나 TXT로 저장하세요.";
+  }
+}
+
+function buildShareText(answers) {
+  const lines = [];
+  const kst = getKSTDateKey();
+  const link = location.href;
+  lines.push(`funnyfunny 밸런스게임 (KST ${kst})`);
+  lines.push(`링크: ${link}`);
+  lines.push("");
+
+  current.indices1.forEach((idx1, i) => {
+    const q = QUESTIONS[idx1 - 1];
+    const { a, b } = splitVs(q);
+    const picked = answers[i] === "A" ? a : (answers[i] === "B" ? b : "(미선택)");
+    lines.push(`${i+1}. ${a}  vs  ${b}`);
+    lines.push(`   👉 내 선택: ${picked}`);
+  });
+
+  lines.push("");
+  lines.push("너는 뭐 고를래? 😈");
+  return lines.join("\n");
+}
+
+function renderGame() {
+  if (!current) return;
+
+  const answers = loadAnswers(current.id);
+  gameEl.innerHTML = "";
+
+  current.indices1.forEach((idx1, i) => {
+    const q = QUESTIONS[idx1 - 1];
+    const cat = categoryOfIndex1(idx1);
+    const { a, b } = splitVs(q);
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const top = document.createElement("div");
+    top.className = "qtop";
+
+    const left = document.createElement("div");
+    left.innerHTML = `<span class="qnum">Q${i+1}</span> <span class="small">(문항 #${idx1})</span>`;
+    const right = document.createElement("div");
+    right.className = "qcat";
+    right.textContent = cat ? cat.name : "카테고리 -";
+    top.append(left, right);
+
+    const title = document.createElement("p");
+    title.className = "qtitle";
+    title.textContent = q;
+
+    const choices = document.createElement("div");
+    choices.className = "choices";
+
+    const btnA = document.createElement("button");
+    btnA.className = "choiceBtn";
+    btnA.innerHTML = `<strong>A</strong>${a}`;
+
+    const btnB = document.createElement("button");
+    btnB.className = "choiceBtn";
+    btnB.innerHTML = `<strong>B</strong>${b}`;
+
+    const selected = answers[i] || null;
+    if (selected === "A") btnA.classList.add("selected");
+    if (selected === "B") btnB.classList.add("selected");
+    if (selected) { btnA.disabled = true; btnB.disabled = true; }
+
+    btnA.addEventListener("click", () => {
+      answers[i] = "A";
+      saveAnswers(current.id, answers);
+      renderGame();
+    });
+    btnB.addEventListener("click", () => {
+      answers[i] = "B";
+      saveAnswers(current.id, answers);
+      renderGame();
+    });
+
+    choices.append(btnA, btnB);
+
+    const status = document.createElement("div");
+    status.className = "status";
+    const s = answers[i] ? (answers[i] === "A" ? `선택: A` : `선택: B`) : "선택 안 함";
+    status.textContent = s;
+
+    card.append(top, title, choices, status);
+    gameEl.appendChild(card);
+  });
+
+  updateMeta(answers);
+  txtOut.value = buildShareText(answers);
+  setMsg("");
+}
+
+// --- 게임 생성
+function startGame(indices1, mode, categoryKey="") {
+  current = {
+    indices1,
+    mode,
+    categoryKey,
+    id: makeGameId(indices1, mode, categoryKey)
+  };
+  setHashFromCurrent();
+  // 링크로 공유했을 때도 결과(내 선택)는 브라우저 로컬에만 저장되게 의도
+  renderGame();
+}
+
+function makePoolAll() {
+  return [...Array(QUESTIONS.length)].map((_, i) => i + 1);
+}
+function makePoolCategory(key) {
+  const cat = CATEGORIES.find(c => c.key === key);
+  if (!cat) return makePoolAll();
+  const pool = [];
+  for (let i = cat.start; i <= cat.end; i++) pool.push(i);
+  return pool;
+}
+
+function genRandomAll() {
+  const pool = makePoolAll();
+  const indices1 = pickUniqueIndices(pool, 10);
+  startGame(indices1, "random", "");
+}
+
+function genCategorySelectedOrRandom() {
+  // 선택한 카테고리가 있으면 그걸 우선, 아니면 랜덤 카테고리
+  const selected = selCategory.value;
+  const catKey = selected || CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)].key;
+
+  let pool = makePoolCategory(catKey);
+  let indices1 = pickUniqueIndices(pool, 10);
+
+  // 카테고리 풀 크기가 10 미만이면(현재는 모두 20이라 괜찮음) 부족분은 전체에서 채움
+  if (indices1.length < 10) {
+    const restPool = makePoolAll().filter(n => !indices1.includes(n));
+    indices1 = indices1.concat(pickUniqueIndices(restPool, 10 - indices1.length));
+  }
+  startGame(indices1, "category", catKey);
+}
+
+function genToday10() {
+  const dateKey = getKSTDateKey(); // KST 기준
+  const seed = seedFromString("ff_today_" + dateKey);
+  const rng = xorshift32(seed);
+  const pool = makePoolAll();
+  const indices1 = pickUniqueIndices(pool, 10, rng);
+  startGame(indices1, "today", "");
+}
+
+// --- 링크 복사
+async function copyCurrentLink() {
+  if (!current) { setMsg("먼저 10문제를 생성하세요.", true); return; }
+  try {
+    await navigator.clipboard.writeText(location.href);
+    setMsg("링크 복사 완료!");
+  } catch {
+    // fallback
+    const tmp = document.createElement("textarea");
+    tmp.value = location.href;
+    document.body.appendChild(tmp);
+    tmp.select();
+    document.execCommand("copy");
+    tmp.remove();
+    setMsg("링크 복사 완료!");
+  }
+}
+
+// --- TXT 내보내기
+function exportTxt() {
+  if (!current) { setMsg("먼저 10문제를 생성하세요.", true); return; }
+  const answers = loadAnswers(current.id);
+  const text = buildShareText(answers);
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  const kst = getKSTDateKey();
+  a.href = url;
+  a.download = `funnyfunny_balance_${kst}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  setMsg("TXT 파일로 저장했어요.");
+}
+
+// --- 초기화
+function resetAll() {
+  current = null;
+  location.hash = "";
+  gameEl.innerHTML = "";
+  txtOut.value = "";
+  updateMeta({});
+  setMsg("초기화 완료.");
+}
+
+// --- 초기 로딩: 카테고리 셀렉트 채우기
+function initCategorySelect() {
+  CATEGORIES.forEach(c => {
+    const opt = document.createElement("option");
+    opt.value = c.key;
+    opt.textContent = c.name;
+    selCategory.appendChild(opt);
+  });
+}
+
+// --- 해시로 진입한 경우 로드
+function bootFromHashOrIdle() {
+  const h = readHashGame();
+  if (!h) {
+    updateMeta({});
+    return;
+  }
+  const indices1 = h.indices1;
+  const mode = h.mode || "link";
+  const categoryKey = h.categoryKey || "";
+  current = {
+    indices1,
+    mode,
+    categoryKey,
+    id: makeGameId(indices1, mode, categoryKey)
+  };
+  // 해시로 들어오면 그대로 렌더
+  renderGame();
+  setMsg("공유 링크로 게임을 불러왔어요!");
+}
+
+$("#btnRandom").addEventListener("click", genRandomAll);
+$("#btnCatRandom").addEventListener("click", genCategorySelectedOrRandom);
+$("#btnToday").addEventListener("click", genToday10);
+$("#btnCopyLink").addEventListener("click", copyCurrentLink);
+$("#btnExportTxt").addEventListener("click", exportTxt);
+$("#btnReset").addEventListener("click", resetAll);
+
+// 해시 변경 시에도 로드(공유 링크 열기 등)
+window.addEventListener("hashchange", () => {
+  // 이미 게임 중이면 그대로 두고, 해시가 외부에서 바뀐 경우만 반영
+  const h = readHashGame();
+  if (!h) return;
+  const indicesKey = encodeIndices(h.indices1);
+  if (current && encodeIndices(current.indices1) === indicesKey) return;
+
+  current = {
+    indices1: h.indices1,
+    mode: h.mode || "link",
+    categoryKey: h.categoryKey || "",
+    id: makeGameId(h.indices1, h.mode || "link", h.categoryKey || "")
+  };
+  renderGame();
+});
+
+initCategorySelect();
+bootFromHashOrIdle();
+</script>
+</body>
+</html>
