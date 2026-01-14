@@ -197,14 +197,44 @@
       margin: 16px auto;
         text-align: center;
 }
+    .lang-switch {
+      display: inline-flex;
+      gap: 4px;
+      padding: 2px;
+      border-radius: 999px;
+      background: rgba(26, 23, 21, 0.05);
+      border: 1px solid var(--line);
+    }
+    .lang-switch button {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .lang-switch button.active {
+      background: var(--accent);
+      color: #fff;
+    }
+    .lang-switch button:hover {
+      background: rgba(255, 122, 89, 0.1);
+    }
   </style>
 </head>
 <body><header>
   <div class="headerActions">
-    <a class="headerLink" href="https://funnyfunny.cloud/" target="_blank" rel="noopener noreferrer">다른 서비스 보기</a>
+    <div class="lang-switch" role="tablist" aria-label="Language switcher">
+      <button type="button" data-lang="ko" class="active">KR</button>
+      <button type="button" data-lang="en">EN</button>
+    </div>
+    <a class="headerLink" href="https://funnyfunny.cloud/" target="_blank" rel="noopener noreferrer" data-i18n="viewMore">다른 서비스 보기</a>
   </div>
-  <h1>funnyfunny 밸런스게임</h1>
-  <div class="sub">
+  <h1 data-i18n="title">funnyfunny 밸런스게임</h1>
+  <div class="sub" data-i18n-html="subtitle">
     ✅ <b>랜덤 10문제</b> / ✅ <b>카테고리 랜덤</b> / ✅ <b>오늘의 10문제(KST)</b><br>
     ✅ <b>링크 공유</b>(URL 해시로 저장) / ✅ <b>내 선택 TXT</b> 내보내기 (정적 HTML만)
   </div>
@@ -212,40 +242,40 @@
 
 <main>
   <div class="controls">
-    <button id="btnRandom">🎲 랜덤 10문제</button>
-    <select id="selCategory" title="카테고리 선택">
-      <option value="">카테고리 선택</option>
+    <button id="btnRandom" data-i18n="btnRandom">🎲 랜덤 10문제</button>
+    <select id="selCategory" title="카테고리 선택" data-i18n-title="selectCategory">
+      <option value="" data-i18n="selectCategory">카테고리 선택</option>
     </select>
-    <button id="btnCatRandom">🧩 카테고리 랜덤</button>
-    <button id="btnToday">📅 오늘의 10문제</button>
-    <button id="btnCopyLink">🔗 현재 링크 복사</button>
-    <button id="btnExportTxt">🧾 TXT로 내보내기</button>
-    <button id="btnReset">♻️ 초기화</button>
+    <button id="btnCatRandom" data-i18n="btnCatRandom">🧩 카테고리 랜덤</button>
+    <button id="btnToday" data-i18n="btnToday">📅 오늘의 10문제</button>
+    <button id="btnCopyLink" data-i18n="btnCopyLink">🔗 현재 링크 복사</button>
+    <button id="btnExportTxt" data-i18n="btnExportTxt">🧾 TXT로 내보내기</button>
+    <button id="btnReset" data-i18n="btnReset">♻️ 초기화</button>
   </div>
 
   <div class="meta">
-    <span class="pill" id="pillMode">모드: -</span>
-    <span class="pill" id="pillCat">카테고리: -</span>
-    <span class="pill" id="pillProgress">진행: 0/10</span>
+    <span class="pill" id="pillMode" data-i18n="pillMode">모드: -</span>
+    <span class="pill" id="pillCat" data-i18n="pillCat">카테고리: -</span>
+    <span class="pill" id="pillProgress" data-i18n="pillProgress">진행: 0/10</span>
   </div>
 
   <div class="row">
     <div class="bar" aria-label="진행도">
       <div id="progressFill"></div>
     </div>
-    <div class="small" id="hintText">버튼을 눌러 10문제를 생성하세요.</div>
+    <div class="small" id="hintText" data-i18n="hintText">버튼을 눌러 10문제를 생성하세요.</div>
   </div>
 
   <div style="height:12px"></div>
   <div id="game" class="grid"></div>
 
   <div class="summary">
-    <h2 style="font-size:16px; margin: 18px 0 8px;">내 결과(공유/복사용)</h2>
+    <h2 style="font-size:16px; margin: 18px 0 8px;" data-i18n="resultTitle">내 결과(공유/복사용)</h2>
     <textarea id="txtOut" readonly></textarea>
     <div class="controls" style="margin-top: 8px;">
-      <button id="btnShareResult">📣 내 결과 공유하기</button>
+      <button id="btnShareResult" data-i18n="btnShareResult">📣 내 결과 공유하기</button>
     </div>
-    <div class="small">
+    <div class="small" data-i18n-html="resultNote">
       - TXT 내보내기는 파일 다운로드로 저장됩니다.<br>
       - “링크 공유”는 <b>#</b>에 문제 조합이 저장되어 같은 링크로 같은 10문제를 다시 열 수 있어요.
     </div>
@@ -261,6 +291,125 @@
 </main>
 
 <script>
+/* i18n */
+const translations = {
+  ko: {
+    metaTitle: "funnyfunny.cloud 밸런스게임",
+    metaDescription: "랜덤 밸런스게임 10문제. 링크로 공유하고 TXT로 내보내기.",
+    title: "funnyfunny 밸런스게임",
+    subtitle: "✅ <b>랜덤 10문제</b> / ✅ <b>카테고리 랜덤</b> / ✅ <b>오늘의 10문제(KST)</b><br>✅ <b>링크 공유</b>(URL 해시로 저장) / ✅ <b>내 선택 TXT</b> 내보내기 (정적 HTML만)",
+    viewMore: "다른 서비스 보기",
+    btnRandom: "🎲 랜덤 10문제",
+    selectCategory: "카테고리 선택",
+    btnCatRandom: "🧩 카테고리 랜덤",
+    btnToday: "📅 오늘의 10문제",
+    btnCopyLink: "🔗 현재 링크 복사",
+    btnExportTxt: "🧾 TXT로 내보내기",
+    btnReset: "♻️ 초기화",
+    pillMode: "모드: {mode}",
+    pillCat: "카테고리: {cat}",
+    pillProgress: "진행: {answered}/{total}",
+    hintText: "버튼을 눌러 10문제를 생성하세요.",
+    resultTitle: "내 결과(공유/복사용)",
+    btnShareResult: "📣 내 결과 공유하기",
+    resultNote: "- TXT 내보내기는 파일 다운로드로 저장됩니다.<br>- “링크 공유”는 <b>#</b>에 문제 조합이 저장되어 같은 링크로 같은 10문제를 다시 열 수 있어요."
+  },
+  en: {
+    metaTitle: "funnyfunny.cloud Balance Game",
+    metaDescription: "Random balance game 10 questions. Share via link and export as TXT.",
+    title: "funnyfunny Balance Game",
+    subtitle: "✅ <b>Random 10 questions</b> / ✅ <b>Category random</b> / ✅ <b>Today's 10 questions (KST)</b><br>✅ <b>Link sharing</b> (saved in URL hash) / ✅ <b>Export my choices as TXT</b> (static HTML only)",
+    viewMore: "View Other Services",
+    btnRandom: "🎲 Random 10 Questions",
+    selectCategory: "Select Category",
+    btnCatRandom: "🧩 Category Random",
+    btnToday: "📅 Today's 10 Questions",
+    btnCopyLink: "🔗 Copy Current Link",
+    btnExportTxt: "🧾 Export as TXT",
+    btnReset: "♻️ Reset",
+    pillMode: "Mode: {mode}",
+    pillCat: "Category: {cat}",
+    pillProgress: "Progress: {answered}/{total}",
+    hintText: "Click a button to generate 10 questions.",
+    resultTitle: "My Results (for sharing/copying)",
+    btnShareResult: "📣 Share My Results",
+    resultNote: "- TXT export will be saved as a file download.<br>- \"Link sharing\" saves the question combination in <b>#</b>, so you can open the same 10 questions again with the same link."
+  }
+};
+
+const defaultLang = "en";
+const supportedLangs = ["ko", "en"];
+let currentLang = defaultLang;
+
+function t(key, vars = {}) {
+  const langTable = translations[currentLang] || translations.ko;
+  const template = langTable?.[key] ?? translations.ko?.[key] ?? key;
+  if (typeof template !== "string") return template;
+  return template.replace(/\{(\w+)\}/g, (_, token) =>
+    vars[token] !== undefined ? vars[token] : `{${token}}`
+  );
+}
+
+function applyTranslations() {
+  document.title = t("metaTitle");
+  const desc = document.querySelector('meta[name="description"]');
+  if (desc) desc.setAttribute("content", t("metaDescription"));
+  document.documentElement.lang = currentLang;
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-html]").forEach((el) => {
+    el.innerHTML = t(el.dataset.i18nHtml);
+  });
+  document.querySelectorAll("[data-i18n-title]").forEach((el) => {
+    el.setAttribute("title", t(el.dataset.i18nTitle));
+  });
+}
+
+function setLang(lang, options = {}) {
+  const nextLang = translations[lang] ? lang : defaultLang;
+  currentLang = nextLang;
+  document.documentElement.lang = nextLang;
+  localStorage.setItem("preferredLang", nextLang);
+  document.querySelectorAll(".lang-switch button").forEach((button) => {
+    button.classList.toggle("active", button.dataset.lang === nextLang);
+  });
+  applyTranslations();
+  if (typeof updateMeta === "function" && current) updateMeta(loadAnswers(current.id));
+  if (options.updateUrl) {
+    const url = new URL(window.location.href);
+    url.searchParams.set("lang", nextLang);
+    window.history.replaceState({}, "", url);
+  }
+}
+
+function getRegionPreferredLang(fallback = defaultLang) {
+  const intlLocale =
+    typeof Intl === "object" && typeof Intl.DateTimeFormat === "function"
+      ? Intl.DateTimeFormat().resolvedOptions().locale
+      : "";
+  const sources = [
+    ...(navigator.languages || []),
+    navigator.language,
+    navigator.userLanguage,
+    intlLocale,
+  ]
+    .filter(Boolean)
+    .map((locale) => locale.toLowerCase());
+  const hasKorean = sources.some((locale) => locale.startsWith("ko"));
+  return hasKorean ? "ko" : fallback;
+}
+
+function detectLang() {
+  const params = new URLSearchParams(window.location.search);
+  const paramLang = params.get("lang");
+  if (supportedLangs.includes(paramLang)) return paramLang;
+  const stored = localStorage.getItem("preferredLang");
+  if (supportedLangs.includes(stored)) return stored;
+  const candidate = getRegionPreferredLang(defaultLang);
+  return supportedLangs.includes(candidate) ? candidate : defaultLang;
+}
+
 /**
  * =========================================================
  *  200개 밸런스 문항 (사용자 요청: 내가 만든 200개로 시작)
@@ -647,14 +796,14 @@ function computeProgress(answers) {
 
 function updateMeta(answers) {
   const p = computeProgress(answers);
-  pillMode.textContent = `모드: ${current ? current.mode : "-"}`;
-  const catName = current?.categoryKey ? (CATEGORIES.find(c => c.key === current.categoryKey)?.name || current.categoryKey) : "전체";
-  pillCat.textContent = `카테고리: ${catName}`;
-  pillProgress.textContent = `진행: ${p.answered}/${p.total}`;
+  pillMode.textContent = t("pillMode", { mode: current ? current.mode : "-" });
+  const catName = current?.categoryKey ? (CATEGORIES.find(c => c.key === current.categoryKey)?.name || current.categoryKey) : (currentLang === "en" ? "All" : "전체");
+  pillCat.textContent = t("pillCat", { cat: catName });
+  pillProgress.textContent = t("pillProgress", { answered: p.answered, total: p.total });
   progressFill.style.width = `${(p.answered / p.total) * 100}%`;
 
   if (!current) {
-    hintText.textContent = "버튼을 눌러 10문제를 생성하세요.";
+    hintText.textContent = t("hintText");
   } else if (p.answered < p.total) {
     hintText.textContent = "각 문항에서 A/B 중 하나를 눌러주세요. (선택은 내 브라우저에만 저장됨)";
   } else {
@@ -934,6 +1083,13 @@ window.addEventListener("hashchange", () => {
   renderGame();
 });
 
+document.querySelectorAll(".lang-switch button").forEach((button) => {
+  button.addEventListener("click", () => {
+    setLang(button.dataset.lang, { updateUrl: true });
+  });
+});
+
+setLang(detectLang(), { updateUrl: false });
 initCategorySelect();
 bootFromHashOrIdle();
 </script>
