@@ -310,9 +310,30 @@ const translations = {
     pillCat: "카테고리: {cat}",
     pillProgress: "진행: {answered}/{total}",
     hintText: "버튼을 눌러 10문제를 생성하세요.",
+    hintTextInProgress: "각 문항에서 A/B 중 하나를 눌러주세요. (선택은 내 브라우저에만 저장됨)",
+    hintTextComplete: "완료! 아래 '내 결과'로 공유하거나 TXT로 저장하세요.",
     resultTitle: "내 결과(공유/복사용)",
     btnShareResult: "📣 내 결과 공유하기",
-    resultNote: "- TXT 내보내기는 파일 다운로드로 저장됩니다.<br>- “링크 공유”는 <b>#</b>에 문제 조합이 저장되어 같은 링크로 같은 10문제를 다시 열 수 있어요."
+    resultNote: "- TXT 내보내기는 파일 다운로드로 저장됩니다.<br>- “링크 공유”는 <b>#</b>에 문제 조합이 저장되어 같은 링크로 같은 10문제를 다시 열 수 있어요.",
+    shareTextTitle: "funnyfunny 밸런스게임 (KST {kst})",
+    shareTextLink: "링크:",
+    shareTextMyChoice: "내 선택:",
+    shareTextPrompt: "너는 뭐 고를래? 😈",
+    shareTextNotSelected: "(미선택)",
+    statusSelectedA: "선택: A",
+    statusSelectedB: "선택: B",
+    statusNotSelected: "선택 안 함",
+    categoryNone: "카테고리 -",
+    questionNumber: "(문항 #{num})",
+    msgGenerateFirst: "먼저 10문제를 생성하세요.",
+    msgLinkCopied: "링크 복사 완료!",
+    msgTxtSaved: "TXT 파일로 저장했어요.",
+    msgShareComplete: "공유 완료!",
+    msgResultCopied: "내 결과를 복사했어요!",
+    msgShareNotSupported: "공유가 지원되지 않아요. TXT로 내보내기를 이용하세요.",
+    msgGameLoaded: "공유 링크로 게임을 불러왔어요!",
+    msgResetComplete: "초기화 완료.",
+    shareResultTitle: "funnyfunny 밸런스게임 결과"
   },
   en: {
     metaTitle: "funnyfunny.cloud Balance Game",
@@ -331,9 +352,30 @@ const translations = {
     pillCat: "Category: {cat}",
     pillProgress: "Progress: {answered}/{total}",
     hintText: "Click a button to generate 10 questions.",
+    hintTextInProgress: "Click A or B for each question. (Your choices are saved only in your browser)",
+    hintTextComplete: "Complete! Share your results below or save as TXT.",
     resultTitle: "My Results (for sharing/copying)",
     btnShareResult: "📣 Share My Results",
-    resultNote: "- TXT export will be saved as a file download.<br>- \"Link sharing\" saves the question combination in <b>#</b>, so you can open the same 10 questions again with the same link."
+    resultNote: "- TXT export will be saved as a file download.<br>- \"Link sharing\" saves the question combination in <b>#</b>, so you can open the same 10 questions again with the same link.",
+    shareTextTitle: "funnyfunny Balance Game (KST {kst})",
+    shareTextLink: "Link:",
+    shareTextMyChoice: "My choice:",
+    shareTextPrompt: "What would you choose? 😈",
+    shareTextNotSelected: "(Not selected)",
+    statusSelectedA: "Selected: A",
+    statusSelectedB: "Selected: B",
+    statusNotSelected: "Not selected",
+    categoryNone: "Category -",
+    questionNumber: "(Question #{num})",
+    msgGenerateFirst: "Please generate 10 questions first.",
+    msgLinkCopied: "Link copied!",
+    msgTxtSaved: "Saved as TXT file.",
+    msgShareComplete: "Share complete!",
+    msgResultCopied: "Copied my results!",
+    msgShareNotSupported: "Sharing is not supported. Please use TXT export.",
+    msgGameLoaded: "Game loaded from shared link!",
+    msgResetComplete: "Reset complete.",
+    shareResultTitle: "funnyfunny Balance Game Results"
   }
 };
 
@@ -364,6 +406,21 @@ function applyTranslations() {
   document.querySelectorAll("[data-i18n-title]").forEach((el) => {
     el.setAttribute("title", t(el.dataset.i18nTitle));
   });
+  // Update category select
+  if (selCategory) {
+    Array.from(selCategory.options).forEach((opt, idx) => {
+      if (idx === 0) return; // Skip first option (placeholder)
+      const cat = CATEGORIES.find(c => c.key === opt.value);
+      if (cat) {
+        opt.textContent = currentLang === "en" ? cat.nameEn : cat.nameKo;
+      }
+    });
+  }
+  // Re-render game if active
+  if (current) {
+    renderGame();
+    updateMeta(loadAnswers(current.id));
+  }
 }
 
 function setLang(lang, options = {}) {
@@ -629,16 +686,16 @@ const QUESTIONS = [
 
 // ---- 카테고리(구간 태깅)
 const CATEGORIES = [
-  { key: "food",   name: "🍜 음식",       start: 1,   end: 20  },
-  { key: "life",   name: "🏠 생활",       start: 21,  end: 40  },
-  { key: "work",   name: "💼 직장/학교",  start: 41,  end: 60  },
-  { key: "love",   name: "💬 친구/연애",  start: 61,  end: 80  },
-  { key: "fantasy",name: "✨ 초능력",     start: 81,  end: 100 },
-  { key: "travel", name: "🧳 여행",       start: 101, end: 120 },
-  { key: "hobby",  name: "🎮 취미/콘텐츠", start: 121, end: 140 },
-  { key: "tech",   name: "📱 테크/SNS",   start: 141, end: 160 },
-  { key: "style",  name: "💪 라이프/운동", start: 161, end: 180 },
-  { key: "misc",   name: "🌀 기타",       start: 181, end: 200 },
+  { key: "food",   nameKo: "🍜 음식",       nameEn: "🍜 Food",       start: 1,   end: 20  },
+  { key: "life",   nameKo: "🏠 생활",       nameEn: "🏠 Life",       start: 21,  end: 40  },
+  { key: "work",   nameKo: "💼 직장/학교",  nameEn: "💼 Work/School", start: 41,  end: 60  },
+  { key: "love",   nameKo: "💬 친구/연애",  nameEn: "💬 Friends/Love", start: 61,  end: 80  },
+  { key: "fantasy",nameKo: "✨ 초능력",     nameEn: "✨ Superpower", start: 81,  end: 100 },
+  { key: "travel", nameKo: "🧳 여행",       nameEn: "🧳 Travel",       start: 101, end: 120 },
+  { key: "hobby",  nameKo: "🎮 취미/콘텐츠", nameEn: "🎮 Hobby/Content", start: 121, end: 140 },
+  { key: "tech",   nameKo: "📱 테크/SNS",   nameEn: "📱 Tech/SNS",   start: 141, end: 160 },
+  { key: "style",  nameKo: "💪 라이프/운동", nameEn: "💪 Life/Exercise", start: 161, end: 180 },
+  { key: "misc",   nameKo: "🌀 기타",       nameEn: "🌀 Misc",       start: 181, end: 200 },
 ];
 
 const $ = (sel) => document.querySelector(sel);
@@ -786,7 +843,13 @@ function computeProgress(answers) {
 function updateMeta(answers) {
   const p = computeProgress(answers);
   pillMode.textContent = t("pillMode", { mode: current ? current.mode : "-" });
-  const catName = current?.categoryKey ? (CATEGORIES.find(c => c.key === current.categoryKey)?.name || current.categoryKey) : (currentLang === "en" ? "All" : "전체");
+  let catName;
+  if (current?.categoryKey) {
+    const cat = CATEGORIES.find(c => c.key === current.categoryKey);
+    catName = cat ? (currentLang === "en" ? cat.nameEn : cat.nameKo) : current.categoryKey;
+  } else {
+    catName = currentLang === "en" ? "All" : "전체";
+  }
   pillCat.textContent = t("pillCat", { cat: catName });
   pillProgress.textContent = t("pillProgress", { answered: p.answered, total: p.total });
   progressFill.style.width = `${(p.answered / p.total) * 100}%`;
@@ -794,9 +857,9 @@ function updateMeta(answers) {
   if (!current) {
     hintText.textContent = t("hintText");
   } else if (p.answered < p.total) {
-    hintText.textContent = "각 문항에서 A/B 중 하나를 눌러주세요. (선택은 내 브라우저에만 저장됨)";
+    hintText.textContent = t("hintTextInProgress");
   } else {
-    hintText.textContent = "완료! 아래 ‘내 결과’로 공유하거나 TXT로 저장하세요.";
+    hintText.textContent = t("hintTextComplete");
   }
 }
 
@@ -804,20 +867,20 @@ function buildShareText(answers) {
   const lines = [];
   const kst = getKSTDateKey();
   const link = location.href;
-  lines.push(`funnyfunny 밸런스게임 (KST ${kst})`);
-  lines.push(`링크: ${link}`);
+  lines.push(t("shareTextTitle", { kst }));
+  lines.push(`${t("shareTextLink")} ${link}`);
   lines.push("");
 
   current.indices1.forEach((idx1, i) => {
     const q = QUESTIONS[idx1 - 1];
     const { a, b } = splitVs(q);
-    const picked = answers[i] === "A" ? a : (answers[i] === "B" ? b : "(미선택)");
+    const picked = answers[i] === "A" ? a : (answers[i] === "B" ? b : t("shareTextNotSelected"));
     lines.push(`${i+1}. ${a}  vs  ${b}`);
-    lines.push(`   👉 내 선택: ${picked}`);
+    lines.push(`   👉 ${t("shareTextMyChoice")} ${picked}`);
   });
 
   lines.push("");
-  lines.push("너는 뭐 고를래? 😈");
+  lines.push(t("shareTextPrompt"));
   return lines.join("\n");
 }
 
@@ -839,10 +902,10 @@ function renderGame() {
     top.className = "qtop";
 
     const left = document.createElement("div");
-    left.innerHTML = `<span class="qnum">Q${i+1}</span> <span class="small">(문항 #${idx1})</span>`;
+    left.innerHTML = `<span class="qnum">Q${i+1}</span> <span class="small">${t("questionNumber", { num: idx1 })}</span>`;
     const right = document.createElement("div");
     right.className = "qcat";
-    right.textContent = cat ? cat.name : "카테고리 -";
+    right.textContent = cat ? (currentLang === "en" ? cat.nameEn : cat.nameKo) : t("categoryNone");
     top.append(left, right);
 
     const title = document.createElement("p");
@@ -880,7 +943,7 @@ function renderGame() {
 
     const status = document.createElement("div");
     status.className = "status";
-    const s = answers[i] ? (answers[i] === "A" ? `선택: A` : `선택: B`) : "선택 안 함";
+    const s = answers[i] ? (answers[i] === "A" ? t("statusSelectedA") : t("statusSelectedB")) : t("statusNotSelected");
     status.textContent = s;
 
     card.append(top, title, choices, status);
@@ -949,10 +1012,10 @@ function genToday10() {
 
 // --- 링크 복사
 async function copyCurrentLink() {
-  if (!current) { setMsg("먼저 10문제를 생성하세요.", true); return; }
+  if (!current) { setMsg(t("msgGenerateFirst"), true); return; }
   try {
     await navigator.clipboard.writeText(location.href);
-    setMsg("링크 복사 완료!");
+    setMsg(t("msgLinkCopied"));
   } catch {
     // fallback
     const tmp = document.createElement("textarea");
@@ -961,13 +1024,13 @@ async function copyCurrentLink() {
     tmp.select();
     document.execCommand("copy");
     tmp.remove();
-    setMsg("링크 복사 완료!");
+    setMsg(t("msgLinkCopied"));
   }
 }
 
 // --- TXT 내보내기
 function exportTxt() {
-  if (!current) { setMsg("먼저 10문제를 생성하세요.", true); return; }
+  if (!current) { setMsg(t("msgGenerateFirst"), true); return; }
   const answers = loadAnswers(current.id);
   const text = buildShareText(answers);
   const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
@@ -981,18 +1044,18 @@ function exportTxt() {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
-  setMsg("TXT 파일로 저장했어요.");
+  setMsg(t("msgTxtSaved"));
 }
 
 // --- 내 결과 공유
 async function shareResultText() {
-  if (!current) { setMsg("먼저 10문제를 생성하세요.", true); return; }
+  if (!current) { setMsg(t("msgGenerateFirst"), true); return; }
   const answers = loadAnswers(current.id);
   const text = buildShareText(answers);
   try {
     if (navigator.share) {
-      await navigator.share({ title: "funnyfunny 밸런스게임 결과", text, url: location.href });
-      setMsg("공유 완료!");
+      await navigator.share({ title: t("shareResultTitle"), text, url: location.href });
+      setMsg(t("msgShareComplete"));
       return;
     }
   } catch {
@@ -1000,9 +1063,9 @@ async function shareResultText() {
   }
   try {
     await navigator.clipboard.writeText(text);
-    setMsg("내 결과를 복사했어요!");
+    setMsg(t("msgResultCopied"));
   } catch {
-    setMsg("공유가 지원되지 않아요. TXT로 내보내기를 이용하세요.", true);
+    setMsg(t("msgShareNotSupported"), true);
   }
 }
 
@@ -1013,7 +1076,7 @@ function resetAll() {
   gameEl.innerHTML = "";
   txtOut.value = "";
   updateMeta({});
-  setMsg("초기화 완료.");
+  setMsg(t("msgResetComplete"));
 }
 
 // --- 초기 로딩: 카테고리 셀렉트 채우기
@@ -1021,7 +1084,7 @@ function initCategorySelect() {
   CATEGORIES.forEach(c => {
     const opt = document.createElement("option");
     opt.value = c.key;
-    opt.textContent = c.name;
+    opt.textContent = currentLang === "en" ? c.nameEn : c.nameKo;
     selCategory.appendChild(opt);
   });
 }
@@ -1044,7 +1107,7 @@ function bootFromHashOrIdle() {
   };
   // 해시로 들어오면 그대로 렌더
   renderGame();
-  setMsg("공유 링크로 게임을 불러왔어요!");
+  setMsg(t("msgGameLoaded"));
 }
 
 $("#btnRandom").addEventListener("click", genRandomAll);
